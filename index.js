@@ -1,1 +1,1 @@
-export {default as arrow} from "./src/drawArrow";
+export {arrow} from "./src/drawArrow";

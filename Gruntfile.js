@@ -1,4 +1,5 @@
 var babel = require('rollup-plugin-babel');
+var nodeResolve  = require('rollup-plugin-node-resolve');
 
 module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-watch');
@@ -10,7 +11,12 @@ module.exports = function(grunt) {
         entry: "index.js",
         format: "umd",
         moduleName: "d3Arrow",
-        plugins: [babel()]
+        plugins: [
+          babel(), 
+          nodeResolve({
+            jsnext: true
+          })
+        ]
       },
       files: {
         'dest':'dist/d3Arrow.js',

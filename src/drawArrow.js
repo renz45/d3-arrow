@@ -1,3 +1,5 @@
+import * as d3 from "./custom-d3"
+
 var arrow = function() {  
   this.startX = 0
   this.startY = 0
@@ -80,4 +82,4 @@ arrow.prototype.drawIn = function(selector, x1, y1, x2, y2){
   
 }
 
-export default arrow
+export {arrow}
