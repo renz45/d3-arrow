@@ -1,12 +1,13 @@
 export {path} from "d3-path"
+
 export {
   mouse,
-  namespace,
-  namespaces,
+  // namespace,
+  // namespaces,
   select,
-  selectAll,
-  selection,
-  touch,
-  touches,
-  event
+  // selectAll,
+  // selection,
+  // touch,
+  // touches,
+  // event
 } from "d3-selection";
