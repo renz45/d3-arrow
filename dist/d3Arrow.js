@@ -967,68 +967,104 @@
 
     var bug44083 = typeof navigator !== "undefined" && /WebKit/.test(navigator.userAgent) ? -1 : 0;
 
-    var arrow = function () {
-      this.startX = 0;
-      this.startY = 0;
-      this.endX = 0;
-      this.endY = 0;
-      this.pointLength = 10;
+    var utils = {
+      elementCoords: element => {
+        let el = element.node && element.node() || element;
 
-      this.svg = select("body").append('svg:svg').attr("width", 200).attr("height", 200).attr("fill", "none");
+        let boundingBox = el.getBoundingClientRect();
 
-      this.arrowHead = this.svg.append("defs").append("marker").attr("id", "Triangle").attr("viewBox", "0 0 10 10").attr("refX", 1).attr("refY", 5).attr("markerWidth", 6).attr("markerHeight", 6).attr("stroke", "black").attr("orient", "auto").append("path").attr("d", "M 0 0 L 10 5 L 0 10 z");
+        return { x: boundingBox.left, y: boundingBox.top };
+      },
 
-      this.path = this.svg.append("path").attr("stroke", "black").attr("stroke-width", 2).attr("fill", "none").attr('stroke-dasharray', "988.00 988.00");
+      // #goodenough
+      uid: function () {
+        return ("00000" + (Math.random() * Math.pow(36, 6) << 0).toString(36)).slice(-6);
+      },
 
-      var that = this;
-      select("#x").on("input", function () {
-        console.log(this.value);
-        that.path.attr("stroke-dashoffset", this.value);
-        if (this.value < 919) {
-          that.path.attr("marker-end", "url(#Triangle)");
-        } else {
-          that.path.attr("marker-end", "");
+      uniqueClass: function (klass, uid) {
+        return `${ klass }:${ uid }`;
+      },
+
+      autoQuadraticCurveTo: (path, startLoc, endLoc) => {
+        let controlLoc = { x: startLoc.x, y: endLoc.y };
+        console.log("------", controlLoc.x, controlLoc.y);
+
+        if (startLoc.x === endLoc.x) {
+          controlLoc.x = controlLoc.x - 100;
+          controlLoc.y = (endLoc.y - startLoc.y) / 2 + startLoc.y;
         }
-      });
+
+        path.quadraticCurveTo(controlLoc.x, controlLoc.y, endLoc.x, endLoc.y);
+      }
+
     };
 
-    arrow.prototype.drawPath = function (x1, y1, x2, y2) {
-      this.startX = x1;
-      this.startY = y1;
-      this.endX = x2;
-      this.endY = y2;
+    var arrow = function (options = { color: "#444" }) {
+      this.startLoc = {};
+      this.endLoc = {};
+      this.uid = utils.uid();
+      // we need this so that the arrow will disappear completely
+      this.dashOffsetPadding = 10;
+
+      this.svg = this.createSvg();
+      this.arrowHead = this.createArrowHead(this.svg, options);
+      this.path = this.createPath(this.svg, options);
+    };
+
+    arrow.prototype.animateDraw = function (percent) {
+      let pathLength = this.pathLength();
+      this.path.attr("stroke-dashoffset", pathLength * (percent / 100));
+
+      if (percent == 0) {
+        this.path.attr("marker-end", `url(#${ utils.uniqueClass("arrow-head", this.uid) })`);
+      } else if (percent == 100) {
+        this.path.attr("stroke-dashoffset", pathLength + this.dashOffsetPadding + 2);
+      } else {
+        this.path.attr("marker-end", "");
+      }
+    };
+
+    arrow.prototype.pathLength = function () {
+      return this.path.node().getTotalLength();
+    };
+
+    arrow.prototype.createSvg = function () {
+      return select("html").append('svg:svg').attr("width", 1000).attr("id", this.uid).attr("height", 1000).attr("fill", "none").style("position", "absolute").style("top", 0).style("left", 0).style("pointer-events", "none");
+    };
+
+    arrow.prototype.createArrowHead = function (svg, options) {
+      return svg.append("defs").append("marker").attr("id", utils.uniqueClass("arrow-head", this.uid)).attr("viewBox", "0 0 10 10").attr("refX", 6).attr("refY", 5).attr("markerWidth", 3).attr("markerHeight", 8).attr("stroke", "none").attr("orient", "auto").attr("fill", options.color).append("path").attr("d", "M 0 0 L 10 5 L 0 10 z");
+    };
+
+    arrow.prototype.createPath = function (svg, options) {
+      return svg.append("path").attr("stroke", options.color).attr("stroke-width", 10).attr("stroke-linecap", "round").attr("fill", "none");
+    };
+
+    arrow.prototype.drawFromTo = function (startSelector, endSelector) {
+      let startEl = select(startSelector);
+      let endEl = select(endSelector);
+      this.startLoc = utils.elementCoords(startEl);
+      this.endLoc = utils.elementCoords(endEl);
+      this.draw(this.startLoc, this.endLoc);
+    };
+
+    arrow.prototype.draw = function (startLoc, endLoc) {
+      this.startLoc = startLoc;
+      this.endLoc = endLoc;
 
       this.arrowPath = path();
-      this.arrowPath.moveTo(this.startX, this.startY);
-      this.arrowPath.lineTo(this.endX, this.endY);
-    };
+      // Move to the beginning of the arrow
+      this.arrowPath.moveTo(this.startLoc.x, this.startLoc.y);
 
-    arrow.prototype.draw = function (selector, x1, y1, x2, y2) {
-      this.drawPath(x1, y1, x2, y2);
-      this.path.attr("d", this.arrowPath.toString()).attr("marker-end", "url(#Triangle)");
-    };
+      // intelligent curve
+      utils.autoQuadraticCurveTo(this.arrowPath, this.startLoc, this.endLoc);
 
-    arrow.prototype.drawIn = function (selector, x1, y1, x2, y2) {
-      var animateValue = 1000;
-      this.drawPath(x1, y1, x2, y2);
-      this.path.attr("stroke-dashoffset", animateValue);
-      this.path.attr("d", this.arrowPath.toString());
-      //  .attr("marker-end", "url(#Triangle)")
-      var that = this;
+      // Render the arrow as an svg path and attach the triangle marker as the arrow head
+      this.path.attr("d", this.arrowPath.toString()).attr("marker-end", `url(#${ utils.uniqueClass("arrow-head", this.uid) })`);
 
-      var interval1 = setInterval(function () {
-        animateValue -= 1;
-        that.path.attr("stroke-dashoffset", animateValue);
-        if (animateValue < 940) {
-          that.path.attr("marker-end", "url(#Triangle)");
-        } else {
-          that.path.attr("marker-end", "");
-        }
-
-        if (animateValue < 700) {
-          clearInterval(interval1);
-        }
-      }, 10);
+      // Set the stroke-dasharray to use in the animation of drawing the arrow
+      let pathLength = this.pathLength();
+      this.path.attr('stroke-dasharray', `${ pathLength + this.dashOffsetPadding } ${ pathLength + this.dashOffsetPadding }`);
     };
 
     exports.arrow = arrow;
