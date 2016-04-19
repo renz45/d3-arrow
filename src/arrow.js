@@ -44,7 +44,6 @@ class Arrow {
                             .style("top", 0)
                             .style("left", 0)
                             .style("pointer-events", "none")
-                            .style("border", "1px dashed red")
   }
 
   createArrowHead(svg, options) {

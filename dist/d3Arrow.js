@@ -1033,7 +1033,7 @@
 
       // reuse the same svg for all arrows when possible
       createSvg() {
-        return select("html").append('svg:svg').attr("width", 1000).attr("id", "d3-arrow").attr("height", 1000).attr("fill", "none").style("position", "absolute").style("top", 0).style("left", 0).style("pointer-events", "none").style("border", "1px dashed red");
+        return select("html").append('svg:svg').attr("width", 1000).attr("id", "d3-arrow").attr("height", 1000).attr("fill", "none").style("position", "absolute").style("top", 0).style("left", 0).style("pointer-events", "none");
       }
 
       createArrowHead(svg, options) {
