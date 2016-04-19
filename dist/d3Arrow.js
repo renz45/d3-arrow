@@ -1006,13 +1006,15 @@
         this.uid = utils.uid();
         // we need this so that the arrow will disappear completely
         this.dashOffsetPadding = 10;
+        this.svgPadding = 20;
 
         this.svg = this.createSvg();
         this.arrowHead = this.createArrowHead(this.svg, options);
         this.path = this.createPath(this.svg, options);
       }
 
-      animateDraw(percent) {
+      animateDraw(percentVal) {
+        let percent = 100 - percentVal;
         let pathLength = this.pathLength();
         this.path.attr("stroke-dashoffset", pathLength * (percent / 100));
 
@@ -1029,8 +1031,9 @@
         return this.path.node().getTotalLength();
       }
 
+      // reuse the same svg for all arrows when possible
       createSvg() {
-        return select("html").append('svg:svg').attr("width", 1000).attr("id", this.uid).attr("height", 1000).attr("fill", "none").style("position", "absolute").style("top", 0).style("left", 0).style("pointer-events", "none");
+        return select("html").append('svg:svg').attr("width", 1000).attr("id", "d3-arrow").attr("height", 1000).attr("fill", "none").style("position", "absolute").style("top", 0).style("left", 0).style("pointer-events", "none").style("border", "1px dashed red");
       }
 
       createArrowHead(svg, options) {
@@ -1041,28 +1044,61 @@
         return svg.append("path").attr("stroke", options.color).attr("stroke-width", 10).attr("stroke-linecap", "round").attr("fill", "none");
       }
 
-      drawFromTo(startSelector, endSelector) {
+      drawFromTo(startSelector, endSelector, options) {
         let startEl = select(startSelector);
         let endEl = select(endSelector);
+
         this.startLoc = utils.elementCoords(startEl);
         this.endLoc = utils.elementCoords(endEl);
-        this.draw(this.startLoc, this.endLoc);
+        this.draw(this.startLoc, this.endLoc, options);
       }
 
-      draw(startLoc, endLoc) {
-        this.startLoc = startLoc;
-        this.endLoc = endLoc;
+      drawFrom(selector) {
+        let startEl = select(selector);
+        this.startLoc = utils.elementCoords(startEl);
+        return this;
+      }
 
+      drawTo(selector, options) {
+        let endEl = select(selector);
+        this.endLoc = utils.elementCoords(endEl);
+        this.draw(this.startLoc, this.endLoc, options);
+      }
+
+      resizeSvgToFitPath(path) {
+        let pathNode = path.node();
+        let pathBounds = pathNode.getBoundingClientRect();
+        let svgNode = this.svg.node();
+        let svgBounds = svgNode.getBoundingClientRect();
+
+        this.svg.attr("width", pathBounds.width + this.svgPadding * 2);
+        this.svg.attr("height", pathBounds.height + this.svgPadding * 2);
+        this.svg.style("left", pathBounds.left - this.svgPadding);
+        this.svg.style("top", pathBounds.top - this.svgPadding);
+
+        this.path.attr("transform", `translate(${ -pathBounds.left + this.svgPadding },${ -pathBounds.top + this.svgPadding })`);
+      }
+
+      draw(startLoc, endLoc, options = { visible: true }) {
         this.arrowPath = path();
+
         // Move to the beginning of the arrow
-        this.arrowPath.moveTo(this.startLoc.x, this.startLoc.y);
+        this.arrowPath.moveTo(startLoc.x, startLoc.y);
 
         // intelligent curve
-        utils.autoQuadraticCurveTo(this.arrowPath, this.startLoc, this.endLoc);
+        utils.autoQuadraticCurveTo(this.arrowPath, startLoc, endLoc);
 
         // Render the arrow as an svg path and attach the triangle marker as the arrow head
-        this.path.attr("d", this.arrowPath.toString()).attr("marker-end", `url(#${ utils.uniqueClass("arrow-head", this.uid) })`);
+        this.path.attr("d", this.arrowPath.toString());
 
+        // Resize the svg to be a bounding box rather then 0 based full screen
+        this.resizeSvgToFitPath(this.path);
+
+        if (!options.visible) {
+          this.animateDraw(0);
+        } else {
+          this.path.attr("marker-end", `url(#${ utils.uniqueClass("arrow-head", this.uid) })`);
+        }
         // Set the stroke-dasharray to use in the animation of drawing the arrow
         let pathLength = this.pathLength();
         this.path.attr('stroke-dasharray', `${ pathLength + this.dashOffsetPadding } ${ pathLength + this.dashOffsetPadding }`);
