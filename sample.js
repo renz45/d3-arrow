@@ -18,8 +18,8 @@
 // arrow7.draw("body", 100, 100, 50, 150)
 // arrow8.draw("body", 100, 100, 150, 50)
 
-arrow1 = new d3Arrow.arrow()
-arrow2 = new d3Arrow.arrow({color: "red"})
+arrow1 = new d3Arrow.Arrow()
+arrow2 = new d3Arrow.Arrow({color: "red"})
 // arrow3 = new d3Arrow.arrow({color: "blue"})
 
 arrow1.drawFromTo(".callout1", '.col2 h2')
