@@ -1014,6 +1014,7 @@
       }
 
       animateDraw(percentVal) {
+        this.currentAnimateDraw = percentVal;
         let percent = 100 - percentVal;
         let pathLength = this.pathLength();
         this.path.attr("stroke-dashoffset", pathLength * (percent / 100));
@@ -1044,25 +1045,28 @@
         return svg.append("path").attr("stroke", options.color).attr("stroke-width", 10).attr("stroke-linecap", "round").attr("fill", "none");
       }
 
-      drawFromTo(startSelector, endSelector, options) {
-        let startEl = select(startSelector);
-        let endEl = select(endSelector);
-
-        this.startLoc = utils.elementCoords(startEl);
-        this.endLoc = utils.elementCoords(endEl);
-        this.draw(this.startLoc, this.endLoc, options);
-      }
-
-      drawFrom(selector) {
-        let startEl = select(selector);
-        this.startLoc = utils.elementCoords(startEl);
+      drawFrom(selector, options = { orientation: "left" }) {
+        this.drawFromOptions = options;
+        this.startEl = select(selector);
+        this.startLoc = utils.elementCoords(this.startEl, options);
         return this;
       }
 
-      drawTo(selector, options) {
-        let endEl = select(selector);
-        this.endLoc = utils.elementCoords(endEl);
-        this.draw(this.startLoc, this.endLoc, options);
+      drawTo(selector, options = { orientation: "left", visible: true }) {
+        this.drawToOptions = options;
+        this.endEl = select(selector);
+        this.endLoc = utils.elementCoords(this.endEl, this.drawToOptions);
+
+        this.draw(this.startLoc, this.endLoc, this.drawToOptions);
+      }
+
+      redraw() {
+        let currentAnimateDraw = this.currentAnimateDraw || 100;
+
+        this.startLoc = utils.elementCoords(this.startEl, this.drawFromOptions);
+        this.endLoc = utils.elementCoords(this.endEl, this.drawToOptions);
+        this.draw(this.startLoc, this.endLoc, this.drawToOptions);
+        this.animateDraw(currentAnimateDraw);
       }
 
       resizeSvgToFitPath(path) {
@@ -1079,7 +1083,7 @@
         this.path.attr("transform", `translate(${ -pathBounds.left + this.svgPadding },${ -pathBounds.top + this.svgPadding })`);
       }
 
-      draw(startLoc, endLoc, options = { visible: true }) {
+      draw(startLoc, endLoc, options) {
         this.arrowPath = path();
 
         // Move to the beginning of the arrow

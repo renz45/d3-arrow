@@ -20,15 +20,17 @@
 
 arrow1 = new d3Arrow.Arrow()
 arrow2 = new d3Arrow.Arrow({color: "red"})
-// arrow3 = new d3Arrow.arrow({color: "blue"})
+arrow3 = new d3Arrow.Arrow({color: "blue"})
 
-arrow1.drawFromTo(".callout1", '.col2 h2', {visible: false})
-arrow2.drawFrom(".callout1").drawTo('.col1 h2')
+arrow1.drawFrom(".test-1 .callout1", {orientation: "left"}).drawTo('.test-1 .col2 h2', {visible: false, orientation: "bottom"})
+arrow2.drawFrom(".test-1 .callout1").drawTo('.test-1 .col1 h2')
+
+arrow3.drawFrom(".test-2 p span").drawTo(".test-2 .col1 p")
 
 // redrawn if the window changes size, responsive layouts
 window.onresize = function(){
-  arrow1.drawFromTo(".callout1", '.col2 h2')
-  arrow2.drawFromTo(".callout1", '.col1 h2')
+  arrow1.redraw()
+  arrow2.redraw()
 }
 
 // Example of animating in an arrow
