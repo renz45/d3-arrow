@@ -1,7 +1,7 @@
 export {path} from "d3-path"
 
 export {
-  mouse,
+  // mouse,
   // namespace,
   // namespaces,
   select,
