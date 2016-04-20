@@ -1,24 +1,25 @@
-var utils = {
-  elementCoords: (element)=> {
+class Utils {
+  static elementCoords(element, options) {
     let el = element.node && element.node() || element;
     
     let boundingBox = el.getBoundingClientRect()
+    
+    if(options.orientation)
 
     return {x: boundingBox.left, y: boundingBox.top}
-  },
+  }
   
   // #goodenough
-  uid: function(){
+  static uid() {
     return ("00000" + (Math.random()*Math.pow(36,6) << 0).toString(36)).slice(-6)
-  },
+  }
   
-  uniqueClass: function(klass, uid){
+  static uniqueClass(klass, uid){
     return `${klass}:${uid}`
-  },
+  }
   
-  autoQuadraticCurveTo: (path, startLoc, endLoc)=> {
+  static autoQuadraticCurveTo(path, startLoc, endLoc) {
     let controlLoc = {x: startLoc.x, y: endLoc.y}
-    console.log("------", controlLoc.x, controlLoc.y)
 
     if(startLoc.x === endLoc.x) {
       controlLoc.x = controlLoc.x - 100
@@ -29,4 +30,4 @@ var utils = {
   }
   
 }
-export default utils
+export default Utils
