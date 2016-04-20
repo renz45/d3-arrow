@@ -967,45 +967,66 @@
 
     var bug44083 = typeof navigator !== "undefined" && /WebKit/.test(navigator.userAgent) ? -1 : 0;
 
-    var utils = {
-      elementCoords: element => {
+    class Utils {
+      static elementCoords(element, options) {
         let el = element.node && element.node() || element;
-
         let boundingBox = el.getBoundingClientRect();
+        let elementLoc = { x: boundingBox.left, y: boundingBox.top };
+        let positionPercent = (options.position || 0) / 100;
+        let depth = options.depth || 0;
 
-        return { x: boundingBox.left, y: boundingBox.top };
-      },
+        switch (options.orientation) {
+          case "top":
+            elementLoc.x = boundingBox.left - (boundingBox.left - boundingBox.right) / 2 - boundingBox.width / 2 * positionPercent;
+            elementLoc.y = boundingBox.top + depth;
+            break;
+          case "bottom":
+            elementLoc.x = boundingBox.left - (boundingBox.left - boundingBox.right) / 2 - boundingBox.width / 2 * positionPercent;
+            elementLoc.y = boundingBox.bottom - depth;
+            break;
+          case "right":
+            elementLoc.x = boundingBox.right - depth;
+            elementLoc.y = boundingBox.top - (boundingBox.top - boundingBox.bottom) / 2 - boundingBox.height / 2 * positionPercent;
+            break;
+          case "left":
+          default:
+            elementLoc.x = boundingBox.left + depth;
+            elementLoc.y = boundingBox.top - (boundingBox.top - boundingBox.bottom) / 2 - boundingBox.height / 2 * positionPercent;
+            break;
+        }
+        return elementLoc;
+      }
 
       // #goodenough
-      uid: function () {
+      static uid() {
         return ("00000" + (Math.random() * Math.pow(36, 6) << 0).toString(36)).slice(-6);
-      },
+      }
 
-      uniqueClass: function (klass, uid) {
+      static uniqueClass(klass, uid) {
         return `${ klass }:${ uid }`;
-      },
+      }
 
-      autoQuadraticCurveTo: (path, startLoc, endLoc) => {
+      static autoQuadraticCurveTo(path, startLoc, endLoc) {
         let controlLoc = { x: startLoc.x, y: endLoc.y };
-        console.log("------", controlLoc.x, controlLoc.y);
 
-        if (startLoc.x === endLoc.x) {
+        if (endLoc.x - startLoc.x < 60) {
           controlLoc.x = controlLoc.x - 100;
           controlLoc.y = (endLoc.y - startLoc.y) / 2 + startLoc.y;
         }
 
         path.quadraticCurveTo(controlLoc.x, controlLoc.y, endLoc.x, endLoc.y);
       }
-
-    };
+    }
 
     class Arrow {
       constructor(options = { color: "#444" }) {
         this.startLoc = {};
         this.endLoc = {};
-        this.uid = utils.uid();
+        this.uid = Utils.uid();
         // we need this so that the arrow will disappear completely
         this.dashOffsetPadding = 10;
+        // This padding is used to push the stroke back so it doesn't show out the front of the arrow
+        this.dashArrowOffset = 20;
         this.svgPadding = 20;
 
         this.svg = this.createSvg();
@@ -1020,9 +1041,9 @@
         this.path.attr("stroke-dashoffset", pathLength * (percent / 100));
 
         if (percent == 0) {
-          this.path.attr("marker-end", `url(#${ utils.uniqueClass("arrow-head", this.uid) })`);
+          this.path.attr("marker-end", `url(#${ Utils.uniqueClass("arrow-head", this.uid) })`);
         } else if (percent == 100) {
-          this.path.attr("stroke-dashoffset", pathLength + this.dashOffsetPadding + 2);
+          this.path.attr("stroke-dashoffset", pathLength + this.dashOffsetPadding + 2 - this.dashArrowOffset);
         } else {
           this.path.attr("marker-end", "");
         }
@@ -1032,13 +1053,14 @@
         return this.path.node().getTotalLength();
       }
 
-      // reuse the same svg for all arrows when possible
       createSvg() {
         return select("html").append('svg:svg').attr("width", 1000).attr("id", "d3-arrow").attr("height", 1000).attr("fill", "none").style("position", "absolute").style("top", 0).style("left", 0).style("pointer-events", "none");
       }
 
       createArrowHead(svg, options) {
-        return svg.append("defs").append("marker").attr("id", utils.uniqueClass("arrow-head", this.uid)).attr("viewBox", "0 0 10 10").attr("refX", 6).attr("refY", 5).attr("markerWidth", 3).attr("markerHeight", 8).attr("stroke", "none").attr("orient", "auto").attr("fill", options.color).append("path").attr("d", "M 0 0 L 10 5 L 0 10 z");
+        let marker = svg.append("defs").append("marker");
+        marker.attr("id", Utils.uniqueClass("arrow-head", this.uid)).attr("viewBox", "0 0 10 10").attr("refX", 10).attr("refY", 5).attr("markerWidth", 30).attr("markerHeight", 80).attr("markerUnits", "userSpaceOnUse").attr("stroke", "none").attr("orient", "auto").attr("fill", options.color).append("path").attr("d", "M 0 0 L 10 5 L 0 10 z");
+        return marker;
       }
 
       createPath(svg, options) {
@@ -1048,14 +1070,14 @@
       drawFrom(selector, options = { orientation: "left" }) {
         this.drawFromOptions = options;
         this.startEl = select(selector);
-        this.startLoc = utils.elementCoords(this.startEl, options);
+        this.startLoc = Utils.elementCoords(this.startEl, options);
         return this;
       }
 
       drawTo(selector, options = { orientation: "left", visible: true }) {
         this.drawToOptions = options;
         this.endEl = select(selector);
-        this.endLoc = utils.elementCoords(this.endEl, this.drawToOptions);
+        this.endLoc = Utils.elementCoords(this.endEl, this.drawToOptions);
 
         this.draw(this.startLoc, this.endLoc, this.drawToOptions);
       }
@@ -1063,8 +1085,8 @@
       redraw() {
         let currentAnimateDraw = this.currentAnimateDraw || 100;
 
-        this.startLoc = utils.elementCoords(this.startEl, this.drawFromOptions);
-        this.endLoc = utils.elementCoords(this.endEl, this.drawToOptions);
+        this.startLoc = Utils.elementCoords(this.startEl, this.drawFromOptions);
+        this.endLoc = Utils.elementCoords(this.endEl, this.drawToOptions);
         this.draw(this.startLoc, this.endLoc, this.drawToOptions);
         this.animateDraw(currentAnimateDraw);
       }
@@ -1090,7 +1112,7 @@
         this.arrowPath.moveTo(startLoc.x, startLoc.y);
 
         // intelligent curve
-        utils.autoQuadraticCurveTo(this.arrowPath, startLoc, endLoc);
+        Utils.autoQuadraticCurveTo(this.arrowPath, startLoc, endLoc);
 
         // Render the arrow as an svg path and attach the triangle marker as the arrow head
         this.path.attr("d", this.arrowPath.toString());
@@ -1101,11 +1123,11 @@
         if (!options.visible) {
           this.animateDraw(0);
         } else {
-          this.path.attr("marker-end", `url(#${ utils.uniqueClass("arrow-head", this.uid) })`);
+          this.path.attr("marker-end", `url(#${ Utils.uniqueClass("arrow-head", this.uid) })`);
         }
         // Set the stroke-dasharray to use in the animation of drawing the arrow
         let pathLength = this.pathLength();
-        this.path.attr('stroke-dasharray', `${ pathLength + this.dashOffsetPadding } ${ pathLength + this.dashOffsetPadding }`);
+        this.path.attr('stroke-dasharray', `${ pathLength + this.dashOffsetPadding - this.dashArrowOffset } ${ pathLength + this.dashOffsetPadding }`);
       }
     }
 

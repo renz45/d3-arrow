@@ -8,6 +8,8 @@ class Arrow {
     this.uid = utils.uid()
     // we need this so that the arrow will disappear completely
     this.dashOffsetPadding = 10
+    // This padding is used to push the stroke back so it doesn't show out the front of the arrow
+    this.dashArrowOffset = 20
     this.svgPadding = 20
 
     this.svg = this.createSvg()
@@ -20,11 +22,11 @@ class Arrow {
     let percent = 100 - percentVal    
     let pathLength = this.pathLength()
     this.path.attr("stroke-dashoffset", pathLength * (percent/100))
-             
+
     if(percent == 0) {
       this.path.attr("marker-end", `url(#${utils.uniqueClass("arrow-head", this.uid)})`)
     } else if(percent == 100) {
-      this.path.attr("stroke-dashoffset", pathLength + this.dashOffsetPadding + 2)
+      this.path.attr("stroke-dashoffset", pathLength + this.dashOffsetPadding + 2 - this.dashArrowOffset)
     } else {
       this.path.attr("marker-end", "")
     }
@@ -33,8 +35,7 @@ class Arrow {
   pathLength() {
     return this.path.node().getTotalLength()
   }
-  
-  // reuse the same svg for all arrows when possible
+
   createSvg() {
     return d3.select("html").append('svg:svg')
                             .attr("width", 1000)
@@ -48,17 +49,19 @@ class Arrow {
   }
 
   createArrowHead(svg, options) {
-    return svg.append("defs").append("marker")
-      .attr("id", utils.uniqueClass("arrow-head", this.uid))
+    let marker = svg.append("defs").append("marker")
+    marker.attr("id", utils.uniqueClass("arrow-head", this.uid))
       .attr("viewBox", "0 0 10 10" )
-      .attr("refX", 6) 
+      .attr("refX", 10) 
       .attr("refY", 5)
-      .attr("markerWidth", 3) 
-      .attr("markerHeight", 8)
+      .attr("markerWidth", 30) 
+      .attr("markerHeight", 80)
+      .attr("markerUnits", "userSpaceOnUse")
       .attr("stroke", "none")
       .attr("orient", "auto")
       .attr("fill", options.color)
       .append("path").attr("d", "M 0 0 L 10 5 L 0 10 z")
+    return marker
   }
 
   createPath(svg, options) {
@@ -109,10 +112,10 @@ class Arrow {
 
   draw(startLoc, endLoc, options) {
     this.arrowPath = d3.path()
-    
+
     // Move to the beginning of the arrow
     this.arrowPath.moveTo(startLoc.x, startLoc.y)
-    
+
     // intelligent curve
     utils.autoQuadraticCurveTo(this.arrowPath, startLoc, endLoc)
     
@@ -129,7 +132,7 @@ class Arrow {
     }
     // Set the stroke-dasharray to use in the animation of drawing the arrow
     let pathLength = this.pathLength()
-    this.path.attr('stroke-dasharray', `${pathLength + this.dashOffsetPadding} ${pathLength + this.dashOffsetPadding}`)
+    this.path.attr('stroke-dasharray', `${pathLength + this.dashOffsetPadding - this.dashArrowOffset} ${pathLength + this.dashOffsetPadding}`)
   }
 }
 

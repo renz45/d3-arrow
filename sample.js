@@ -22,7 +22,7 @@ arrow1 = new d3Arrow.Arrow()
 arrow2 = new d3Arrow.Arrow({color: "red"})
 arrow3 = new d3Arrow.Arrow({color: "blue"})
 
-arrow1.drawFrom(".test-1 .callout1", {orientation: "left"}).drawTo('.test-1 .col2 h2', {visible: false, orientation: "bottom"})
+arrow1.drawFrom(".test-1 .callout1", {orientation: "left"}).drawTo('.test-1 .col2 h2', {visible: false, orientation: "bottom", position: 0, depth: 0})
 arrow2.drawFrom(".test-1 .callout1").drawTo('.test-1 .col1 h2')
 
 arrow3.drawFrom(".test-2 p span").drawTo(".test-2 .col1 p")
