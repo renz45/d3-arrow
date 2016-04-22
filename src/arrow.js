@@ -76,22 +76,28 @@ class Arrow {
     this.drawFromOptions = options
     this.startEl = d3.select(selector)
     this.startLoc = utils.elementCoords(this.startEl, options)
+    this.startLoc.orientation = options.orientation
     return this
   }
   
-  drawTo(selector, options={orientation: "left", visible: true}) {
+  drawTo(selector, options={orientation: "left"}) {
     this.drawToOptions = options
     this.endEl = d3.select(selector)
     this.endLoc = utils.elementCoords(this.endEl, this.drawToOptions)
+    this.endLoc.orientation = options.orientation
     
     this.draw(this.startLoc, this.endLoc, this.drawToOptions)
   }
   
   redraw(){
     let currentAnimateDraw = this.currentAnimateDraw || 100
-
+    let startOrientation = this.startLoc.orientation
+    let endOrientation = this.endLoc.orientation
     this.startLoc = utils.elementCoords(this.startEl, this.drawFromOptions)
     this.endLoc = utils.elementCoords(this.endEl, this.drawToOptions)
+    this.startLoc.orientation = startOrientation
+    this.endLoc.orientation = endOrientation
+    
     this.draw(this.startLoc, this.endLoc, this.drawToOptions)
     this.animateDraw(currentAnimateDraw)
   }
