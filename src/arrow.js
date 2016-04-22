@@ -11,10 +11,14 @@ class Arrow {
     // This padding is used to push the stroke back so it doesn't show out the front of the arrow
     this.dashArrowOffset = 20
     this.svgPadding = 20
-
     this.svg = this.createSvg()
     this.arrowHead = this.createArrowHead(this.svg, options)
     this.path = this.createPath(this.svg, options)
+    
+    if(options.startingArrow){
+      this.startingArrow = this.createArrowHead(this.svg, options)
+      this.startingArrow.attr("id", utils.uniqueClass("start-arrow-head", this.uid))
+    }
   }
   
   animateDraw(percentVal) {
@@ -26,9 +30,13 @@ class Arrow {
     if(percent == 0) {
       this.path.attr("marker-end", `url(#${utils.uniqueClass("arrow-head", this.uid)})`)
     } else if(percent == 100) {
+      this.path.attr("marker-start","")
       this.path.attr("stroke-dashoffset", pathLength + this.dashOffsetPadding + 2 - this.dashArrowOffset)
     } else {
       this.path.attr("marker-end", "")
+      if(this.startingArrow){
+        this.path.attr("marker-start", `url(#${utils.uniqueClass("start-arrow-head", this.uid)})`)
+      }
     }
   }
 
@@ -52,7 +60,7 @@ class Arrow {
     let marker = svg.append("defs").append("marker")
     marker.attr("id", utils.uniqueClass("arrow-head", this.uid))
       .attr("viewBox", "0 0 10 10" )
-      .attr("refX", 10) 
+      .attr("refX", 8) 
       .attr("refY", 5)
       .attr("markerWidth", 30) 
       .attr("markerHeight", 80)
@@ -115,15 +123,28 @@ class Arrow {
     
     this.path.attr("transform", `translate(${-pathBounds.left + this.svgPadding},${-pathBounds.top + this.svgPadding})`)
   }
+  
+  calcSlope(p1, p2) {
+    let slope = Math.atan( (p2.y - p1.y)/(p2.x - p1.x) ) * 180/Math.PI
+
+    // account for negative angles
+    if((slope <= 0 && (p2.x - p1.x) < 0) || (slope > 0 && (p2.x - p1.x) < 0)){
+      slope += 180
+    }
+    return slope
+  }
 
   draw(startLoc, endLoc, options) {
     this.arrowPath = d3.path()
+    if(options.visible === undefined) {
+      options.visible = true
+    }
 
     // Move to the beginning of the arrow
     this.arrowPath.moveTo(startLoc.x, startLoc.y)
 
     // intelligent curve
-    utils.autoQuadraticCurveTo(this.arrowPath, startLoc, endLoc)
+    utils.autoCurveTo(this.arrowPath, startLoc, endLoc)
     
     // Render the arrow as an svg path and attach the triangle marker as the arrow head
     this.path.attr("d", this.arrowPath.toString())
@@ -134,6 +155,12 @@ class Arrow {
     if(!options.visible){
       this.animateDraw(0)
     } else {
+      let pathLength = this.pathLength()
+      let pathNode = this.path.node()
+      let p1 = pathNode.getPointAtLength(pathLength - 20)
+      let p2 = pathNode.getPointAtLength(pathLength)
+
+      this.arrowHead.attr("orient", this.calcSlope(p1, p2))
       this.path.attr("marker-end", `url(#${utils.uniqueClass("arrow-head", this.uid)})`)
     }
     // Set the stroke-dasharray to use in the animation of drawing the arrow
