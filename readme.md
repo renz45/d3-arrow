@@ -3,7 +3,7 @@ Small Animated arrow library using D3. It uses a custom d3 build (see `.src/cust
 so it only uses what it needs from d3. The `sample.js` and `index.html` are purely
 used for visual QA.
 
-(See it in action)[https://rawgit.com/renz45/d3-arrow/master/index.html]
+[See it in action](https://rawgit.com/renz45/d3-arrow/master/index.html)
 
 #How to use
 
