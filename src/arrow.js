@@ -6,14 +6,12 @@ class Arrow {
     this.startLoc = {}
     this.endLoc = {}
     this.uid = utils.uid()
-    // we need this so that the arrow will disappear completely
-    this.dashOffsetPadding = 10
-    // This padding is used to push the stroke back so it doesn't show out the front of the arrow
-    this.dashArrowOffset = 20
     this.svgPadding = 20
     this.svg = this.createSvg()
     this.arrowHead = this.createArrowHead(this.svg, options)
     this.path = this.createPath(this.svg, options)
+    
+    this.arrowDashOffset = 30
     
     if(options.startingArrow){
       this.startingArrow = this.createArrowHead(this.svg, options)
@@ -23,20 +21,36 @@ class Arrow {
   
   animateDraw(percentVal) {
     this.currentAnimateDraw = percentVal
-    let percent = 100 - percentVal    
+    let percent = percentVal
     let pathLength = this.pathLength()
-    this.path.attr("stroke-dashoffset", pathLength * (percent/100))
+    let dashLength = (pathLength * (percent/100))
+    
+    this.path.attr("stroke-dashoffset", 10)
+    
+    if(this.startingArrow) {
+      if(dashLength > pathLength - this.arrowDashOffset) {
+        dashLength = pathLength - this.arrowDashOffset
+        percent = 100
+      }
 
-    if(percent == 0) {
+      this.path.attr('stroke-dasharray', `0 ${this.arrowDashOffset} ${dashLength} ${pathLength + 10}`)
+    } else {
+      this.path.attr('stroke-dasharray', `0 0 ${dashLength} ${pathLength + 10}`)
+    }
+    
+    if(percent == 100) {
       this.path.attr("marker-end", `url(#${utils.uniqueClass("arrow-head", this.uid)})`)
-    } else if(percent == 100) {
-      this.path.attr("marker-start","")
-      this.path.attr("stroke-dashoffset", pathLength + this.dashOffsetPadding + 2 - this.dashArrowOffset)
+    } else if(percent == 0) {
+      if(this.startingArrow) {
+        this.path.attr("marker-start","")
+        this.path.attr("stroke-dashoffset", this.arrowDashOffset + 5)
+      }
     } else {
       this.path.attr("marker-end", "")
-      if(this.startingArrow){
-        this.path.attr("marker-start", `url(#${utils.uniqueClass("start-arrow-head", this.uid)})`)
-      }
+    }
+    
+    if(percent > 0 && this.startingArrow){
+      this.path.attr("marker-start", `url(#${utils.uniqueClass("start-arrow-head", this.uid)})`)
     }
   }
 
@@ -101,6 +115,7 @@ class Arrow {
     let currentAnimateDraw = this.currentAnimateDraw || 100
     let startOrientation = this.startLoc.orientation
     let endOrientation = this.endLoc.orientation
+
     this.startLoc = utils.elementCoords(this.startEl, this.drawFromOptions)
     this.endLoc = utils.elementCoords(this.endEl, this.drawToOptions)
     this.startLoc.orientation = startOrientation
@@ -161,11 +176,16 @@ class Arrow {
       let p2 = pathNode.getPointAtLength(pathLength)
 
       this.arrowHead.attr("orient", this.calcSlope(p1, p2))
-      this.path.attr("marker-end", `url(#${utils.uniqueClass("arrow-head", this.uid)})`)
+
+      if(this.startingArrow) {
+        let p3 = pathNode.getPointAtLength(20)
+        let p4 = pathNode.getPointAtLength(1)
+
+        this.startingArrow.attr("orient", this.calcSlope(p3, p4))
+      }
+      
+      this.animateDraw(100)
     }
-    // Set the stroke-dasharray to use in the animation of drawing the arrow
-    let pathLength = this.pathLength()
-    this.path.attr('stroke-dasharray', `${pathLength + this.dashOffsetPadding - this.dashArrowOffset} ${pathLength + this.dashOffsetPadding}`)
   }
 }
 

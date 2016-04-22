@@ -20,7 +20,7 @@
 
 arrow1 = new d3Arrow.Arrow()
 arrow2 = new d3Arrow.Arrow({color: "red", startingArrow: true})
-arrow3 = new d3Arrow.Arrow({color: "blue", startingArrow: true})
+arrow3 = new d3Arrow.Arrow({color: "blue"})
 arrow4 = new d3Arrow.Arrow({color: "green", startingArrow: true})
 arrow5 = new d3Arrow.Arrow({color: "purple", startingArrow: true})
 arrow6 = new d3Arrow.Arrow({color: "orange", startingArrow: true})
@@ -74,7 +74,7 @@ var timer = window.setInterval(function(){
     window.clearInterval(timer)
   }
 }, 5)
-// 
+
 // // Example of hooking up a slider
 var selector = document.querySelector('#x')
 selector.addEventListener("input", function() {
