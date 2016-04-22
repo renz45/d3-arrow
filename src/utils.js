@@ -37,15 +37,83 @@ class Utils {
     return `${klass}:${uid}`
   }
   
-  static autoQuadraticCurveTo(path, startLoc, endLoc) {
-    let controlLoc = {x: startLoc.x, y: endLoc.y}
-
-    if(endLoc.x - startLoc.x  < 60) {
-      controlLoc.x = controlLoc.x - 100
-      controlLoc.y = (endLoc.y - startLoc.y)/2 + startLoc.y
-    }
+  // startLoc and endLoc are objects that contain x, y, orientation
+  // orientation is one of the following: top, bottom, left, right
+  // orientation is used to customize the curve based on the face its pointing
+  static autoCurveTo(path, startLoc, endLoc, options) {
+    // How close x or y values of each start/end point need to be before a default
+    // curve is generated. So if the start and end points are directly vertical or horizonal
+    // to each other, this creates a slight curve
+    let verticalCurvePadding = 50
+    let samePlaneTolerance = 15
+    let cStartLoc = {x: startLoc.x, y: endLoc.y}
+    let cEndLoc = {x: endLoc.x, y: startLoc.y}
     
-    path.quadraticCurveTo(controlLoc.x, controlLoc.y, endLoc.x, endLoc.y)
+    switch(startLoc.orientation) {
+      case "top":
+        if(Math.abs(endLoc.y - startLoc.y) < samePlaneTolerance){
+          cStartLoc = {x: startLoc.x, y: endLoc.y - verticalCurvePadding}
+        }else{
+          cStartLoc = {x: startLoc.x, y: endLoc.y}
+        }
+      break
+      case "bottom":
+        if(Math.abs(endLoc.y - startLoc.y) < samePlaneTolerance){
+          cStartLoc = {x: startLoc.x, y: endLoc.y + verticalCurvePadding}
+        }else{
+          cStartLoc = {x: startLoc.x, y: endLoc.y}
+        }
+      break
+      case "right":
+        if(Math.abs(endLoc.x - startLoc.x) < samePlaneTolerance){
+          cStartLoc = {x: endLoc.x + verticalCurvePadding, y: startLoc.y}
+        }else{
+          cStartLoc = {x: endLoc.x, y: startLoc.y}
+        }
+      break
+      case "left":
+      default:
+        if(Math.abs(endLoc.x - startLoc.x) < samePlaneTolerance){
+          cStartLoc = {x: endLoc.x - verticalCurvePadding, y: startLoc.y}
+        }else{
+          cStartLoc = {x: endLoc.x, y: startLoc.y}
+        }
+      break
+    }
+
+    switch(endLoc.orientation) {
+      case "top":
+        if(Math.abs(endLoc.y - startLoc.y) < samePlaneTolerance){
+          cEndLoc = {x: endLoc.x, y: startLoc.y - verticalCurvePadding}
+        }else{
+          cEndLoc = {x: endLoc.x, y: startLoc.y}
+        }
+      break
+      case "bottom":
+        if(Math.abs(endLoc.y - startLoc.y) < samePlaneTolerance){
+          cEndLoc = {x: endLoc.x, y: startLoc.y + verticalCurvePadding}
+        }else{
+          cEndLoc = {x: endLoc.x, y: startLoc.y}
+        }
+      break
+      case "right":
+        if(Math.abs(endLoc.x - startLoc.x) < samePlaneTolerance){
+          cEndLoc = {x: startLoc.x + verticalCurvePadding, y: endLoc.y}
+        }else{
+          cEndLoc = {x: startLoc.x, y: endLoc.y}
+        }
+      break
+      case "left":
+      default:
+        if(Math.abs(endLoc.x - startLoc.x) < samePlaneTolerance){
+          cEndLoc = {x: startLoc.x - verticalCurvePadding, y: endLoc.y}
+        }else{
+          cEndLoc = {x: startLoc.x, y: endLoc.y}
+        }
+      break
+    }
+
+    path.bezierCurveTo(cStartLoc.x, cStartLoc.y, cEndLoc.x, cEndLoc.y, endLoc.x, endLoc.y)
   }
 }
 export default Utils
