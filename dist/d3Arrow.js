@@ -1092,7 +1092,7 @@
         this.endLoc = {};
         this.uid = Utils.uid();
         this.svgPadding = 20;
-        this.svg = this.createSvg();
+        this.svg = this.createSvg(options);
         this.arrowHead = this.createArrowHead(this.svg, options);
         this.path = this.createPath(this.svg, options);
 
@@ -1143,8 +1143,8 @@
         return this.path.node().getTotalLength();
       }
 
-      createSvg() {
-        return select("html").append('svg:svg').attr("width", 1000).attr("id", "d3-arrow").attr("height", 1000).attr("fill", "none").style("position", "absolute").style("top", 0).style("left", 0).style("pointer-events", "none");
+      createSvg(options) {
+        return select(options.parent || "html").append('svg:svg').attr("width", 1000).attr("id", "d3-arrow").attr("height", 1000).attr("fill", "none").style("position", "absolute").style("top", 0).style("left", 0).style("pointer-events", "none");
       }
 
       createArrowHead(svg, options) {

@@ -7,7 +7,7 @@ class Arrow {
     this.endLoc = {}
     this.uid = utils.uid()
     this.svgPadding = 20
-    this.svg = this.createSvg()
+    this.svg = this.createSvg(options)
     this.arrowHead = this.createArrowHead(this.svg, options)
     this.path = this.createPath(this.svg, options)
     
@@ -58,8 +58,8 @@ class Arrow {
     return this.path.node().getTotalLength()
   }
 
-  createSvg() {
-    return d3.select("html").append('svg:svg')
+  createSvg(options) {
+    return d3.select(options.parent || "html").append('svg:svg')
                             .attr("width", 1000)
                             .attr("id", "d3-arrow")
                             .attr("height", 1000)
